@@ -1,0 +1,10 @@
+.vscode
+__pycache__
+*.pyc
+demo/db.sql
+static/*
+.idea
+celerybeat-schedule
+opbeans/static/build
+opbeans/templates/base.html
+client
