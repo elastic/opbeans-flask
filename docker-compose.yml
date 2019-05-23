@@ -1,7 +1,8 @@
 version: "2.1"
 services:
   opbeans-python:
-    image: opbeans/opbeans-python:latest
+    build: .
+    image: opbeans-python:latest
     ports:
       - "127.0.0.1:${OPBEANS_PYTHON_PORT:-8000}:3000"
     logging:
