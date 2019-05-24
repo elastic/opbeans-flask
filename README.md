@@ -14,7 +14,7 @@ The database settings are provided via environment variable, like so:
 Create a `virtualenv` with your preferred tooling, then install the requirements:
 
     python -m pip install -r requirements.txt
-    
+
 If you want to use Celery, you'll also need to set up a Redis instance.
 The easiest way for local development is via docker:
 
@@ -30,3 +30,23 @@ There's a compressed SQLite database in the `demo` directory. You can run it lik
     DATABASE_URL=sqlite://./demo/db.sql ./manage.py runserver
 
 There's an admin user, `barista`/`affogato`.
+
+## Testing locally
+
+The simplest way to test this demo is by running:
+
+```bash
+make test
+```
+
+Tests are written using [bats](https://github.com/sstephenson/bats) under the tests dir
+
+## Publishing to dockerhub locally
+
+Publish the docker image with
+
+```bash
+    VERSION=1.2.3 make publish
+```
+
+NOTE: VERSION refers to the tag for the docker image which will be published in the registry

@@ -5,7 +5,7 @@ load 'test_helper/bats-assert/load'
 load test_helpers
 
 IMAGE="bats-opbeans"
-CONTAINER="opbeans-node"
+CONTAINER="opbeans-flask"
 
 @test "build image" {
 	cd $BATS_TEST_DIRNAME/..
