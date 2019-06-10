@@ -1,6 +1,6 @@
 ---
 - job:
-    name: apm-agent-flask/opbeans-flask-mbp
+    name: apm-agent-python/opbeans-flask-mbp
     display-name: Opbeans Flask
     description: Opbeans Flask
     project-type: multibranch
