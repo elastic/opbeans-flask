@@ -1,10 +1,10 @@
 version: "2.1"
 services:
-  opbeans-python:
+  opbeans-flask:
     build: .
-    image: opbeans-python:latest
+    image: opbeans-flask:latest
     ports:
-      - "127.0.0.1:${OPBEANS_PYTHON_PORT:-8000}:3000"
+      - "127.0.0.1:${OPBEANS_PYTHON_PORT:-3000}:3000"
     logging:
       driver: 'json-file'
       options:
@@ -31,7 +31,7 @@ services:
       apm-server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://opbeans-python:8000/"]
+      test: ["CMD", "curl", "--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://opbeans-flask:3000/"]
       interval: 10s
       retries: 10
 

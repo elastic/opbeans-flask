@@ -1,11 +1,10 @@
-elastic-apm==3.0.1
+elastic-apm==4.2.0
 gunicorn==19.8.1
 honcho==1.0.1
 psycopg2-binary==2.7.6.1
 pytz==2017.3
 vine==1.1.4
 whitenoise==3.3.1
-
 
 # flask
 Jinja2==2.10.1
@@ -22,3 +21,5 @@ chardet==3.0.4
 idna==2.7
 requests==2.21.0
 urllib3==1.24.2
+opentracing==2.0.0
+Flask-Opentracing==1.0.0
