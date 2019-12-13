@@ -8,3 +8,4 @@ pytz
 flask==1.1.1
 blinker==1.4
 flask-sqlalchemy==2.4.1
+Flask-Migrate==2.5.2

@@ -4,6 +4,7 @@ import json
 
 from flask import Flask, jsonify, abort, render_template, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 from sqlalchemy.orm import joinedload
 
@@ -28,7 +29,7 @@ dictConfig({
     }
 })
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 SQLITE_DB_PATH = 'sqlite:///' + os.path.abspath(os.path.join(BASE_DIR, 'demo', 'db.sql'))
 
@@ -42,14 +43,16 @@ app.config['ELASTIC_APM'] = {
     'SERVER_TIMEOUT': "10s",
     'DEBUG': True,
 }
+
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 apm = ElasticAPM(app)
 
 #tracing = FlaskTracing(opentracing_tracer, trace_all_requests=True, app=app)
 
 
 class Customer(db.Model):
-    __tablename__ = 'opbeans_customer'
+    __tablename__ = 'opbeans_flask_customer'
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(1000))
     company_name = db.Column(db.String(1000))
@@ -61,16 +64,16 @@ class Customer(db.Model):
 
 
 class Order(db.Model):
-    __tablename__ = 'opbeans_order'
+    __tablename__ = 'opbeans_flask_order'
     id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('opbeans_customer.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('opbeans_flask_customer.id'), nullable=False)
     customer = db.relationship('Customer', backref=db.backref("opbeans_order", lazy=True))
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
-    products = db.relationship('Product', secondary='opbeans_orderline')
+    products = db.relationship('Product', secondary='opbeans_flask_orderline')
 
 
 class ProductType(db.Model):
-    __tablename__ = 'opbeans_producttype'
+    __tablename__ = 'opbeans_flask_producttype'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(1000), unique=True)
 
@@ -79,25 +82,25 @@ class ProductType(db.Model):
 
 
 class Product(db.Model):
-    __tablename__ = 'opbeans_product'
+    __tablename__ = 'opbeans_flask_product'
     id = db.Column(db.Integer, primary_key=True)
     sku = db.Column(db.String(1000), unique=True)
     name = db.Column(db.String(1000))
     description = db.Column(db.Text)
-    product_type_id = db.Column('product_type_id', db.Integer, db.ForeignKey('opbeans_producttype.id'), nullable=False)
-    product_type = db.relationship('ProductType', backref=db.backref('opbeans_product', lazy=True))
+    product_type_id = db.Column('product_type_id', db.Integer, db.ForeignKey('opbeans_flask_producttype.id'), nullable=False)
+    product_type = db.relationship('ProductType', backref=db.backref('opbeans_flask_product', lazy=True))
     stock = db.Column(db.Integer)
     cost = db.Column(db.Integer)
     selling_price = db.Column(db.Integer)
-    orders = db.relationship('Order', secondary='opbeans_orderline')
+    orders = db.relationship('Order', secondary='opbeans_flask_orderline')
 
 
 class OrderLine(db.Model):
-    __tablename__ = 'opbeans_orderline'
-    product_id = db.Column(db.Integer, db.ForeignKey('opbeans_product.id'), primary_key=True)
+    __tablename__ = 'opbeans_flask_orderline'
+    product_id = db.Column(db.Integer, db.ForeignKey('opbeans_flask_product.id'), primary_key=True)
     product = db.relationship('Product')
 
-    order_id = db.Column(db.Integer, db.ForeignKey('opbeans_order.id'), primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('opbeans_flask_order.id'), primary_key=True)
     order = db.relationship('Order')
 
     amount = db.Column(db.Integer)
