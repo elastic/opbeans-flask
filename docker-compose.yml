@@ -1,8 +1,8 @@
 version: "2.1"
 services:
-  opbeans-python:
+  opbeans-flask:
     build: .
-    image: opbeans-python:latest
+    image: opbeans-flask:latest
     ports:
       - "127.0.0.1:${OPBEANS_PYTHON_PORT:-8000}:3000"
     logging:
@@ -11,7 +11,7 @@ services:
           max-size: '2m'
           max-file: '5'
     environment:
-      - ELASTIC_APM_SERVICE_NAME=${ELASTIC_APM_SERVICE_NAME:-opbeans-python}
+      - ELASTIC_APM_SERVICE_NAME=${ELASTIC_APM_SERVICE_NAME:-opbeans-flask}
       - ELASTIC_APM_SERVER_URL=${ELASTIC_APM_SERVER_URL:-http://apm-server:8200}
       - ELASTIC_APM_JS_SERVER_URL=${ELASTIC_APM_JS_SERVER_URL:-http://localhost:8200}
       - ELASTIC_APM_FLUSH_INTERVAL=5
@@ -31,7 +31,7 @@ services:
       apm-server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://opbeans-python:3000/"]
+      test: ["CMD", "curl", "--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://opbeans-flask:3000/"]
       interval: 10s
       retries: 10
 

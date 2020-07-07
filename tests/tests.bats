@@ -5,7 +5,7 @@ load 'test_helper/bats-assert/load'
 load test_helpers
 
 IMAGE="bats-opbeans"
-CONTAINER="opbeans-python"
+CONTAINER="opbeans-flask"
 PORT="8000"
 
 @test "build image" {
