@@ -1,14 +1,9 @@
-import datetime
 import os
 import json
 
 from flask import Flask, jsonify, abort, render_template, send_from_directory
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
-from sqlalchemy.orm import joinedload
-
-from sqlalchemy.sql import func
 from elasticapm.contrib.flask import ElasticAPM
 
 from logging.config import dictConfig
@@ -44,209 +39,38 @@ app.config['ELASTIC_APM'] = {
     'DEBUG': True,
 }
 
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 apm = ElasticAPM(app)
 
 #tracing = FlaskTracing(opentracing_tracer, trace_all_requests=True, app=app)
 
 
-class Customer(db.Model):
-    __tablename__ = 'opbeans_flask_customer'
-    id = db.Column(db.Integer, primary_key=True)
-    full_name = db.Column(db.String(1000))
-    company_name = db.Column(db.String(1000))
-    email = db.Column(db.String(1000))
-    address = db.Column(db.String(1000))
-    postal_code = db.Column(db.String(1000))
-    city = db.Column(db.String(1000))
-    country = db.Column(db.String(1000))
+if "GRAPHQL_URL" not in os.environ:
+    from sql_implementation.models import db
+    from sql_implementation import sql
+
+    migrate = Migrate(app, db)
+
+    db.init_app(app)
+    app.config["sqldb"] = db
+
+    app.register_blueprint(sql)
+
+if "GRAPHQL_URL" in os.environ:
+    from gql import Client
+    from gql.transport.requests import RequestsHTTPTransport
+    from gql_implementation import gql_imp
+
+    client = Client(
+        transport=RequestsHTTPTransport(
+            url=os.environ["GRAPHQL_URL"],
+            retries=3,
+        ),
+        fetch_schema_from_transport=True,
+    )
+    app.config["gql_client"] = client
+    app.register_blueprint(gql_imp)
 
 
-class Order(db.Model):
-    __tablename__ = 'opbeans_flask_order'
-    id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('opbeans_flask_customer.id'), nullable=False)
-    customer = db.relationship('Customer', backref=db.backref("opbeans_order", lazy=True))
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
-    products = db.relationship('Product', secondary='opbeans_flask_orderline')
-
-
-class ProductType(db.Model):
-    __tablename__ = 'opbeans_flask_producttype'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(1000), unique=True)
-
-    def __str__(self):
-        return self.name
-
-
-class Product(db.Model):
-    __tablename__ = 'opbeans_flask_product'
-    id = db.Column(db.Integer, primary_key=True)
-    sku = db.Column(db.String(1000), unique=True)
-    name = db.Column(db.String(1000))
-    description = db.Column(db.Text)
-    product_type_id = db.Column('product_type_id', db.Integer, db.ForeignKey('opbeans_flask_producttype.id'), nullable=False)
-    product_type = db.relationship('ProductType', backref=db.backref('opbeans_flask_product', lazy=True))
-    stock = db.Column(db.Integer)
-    cost = db.Column(db.Integer)
-    selling_price = db.Column(db.Integer)
-    orders = db.relationship('Order', secondary='opbeans_flask_orderline')
-
-
-class OrderLine(db.Model):
-    __tablename__ = 'opbeans_flask_orderline'
-    product_id = db.Column(db.Integer, db.ForeignKey('opbeans_flask_product.id'), primary_key=True)
-    product = db.relationship('Product')
-
-    order_id = db.Column(db.Integer, db.ForeignKey('opbeans_flask_order.id'), primary_key=True)
-    order = db.relationship('Order')
-
-    amount = db.Column(db.Integer)
-
-
-@app.route('/api/products')
-def products():
-    product_list = Product.query.order_by("id").all()
-    data = []
-    for p in product_list:
-        data.append({
-            'id': p.id,
-            'sku': p.sku,
-            'name': p.name,
-            'stock': p.stock,
-            'type_name': p.product_type.name
-        })
-    return jsonify(data)
-
-
-@app.route('/api/products/top')
-def top_products():
-    sold_amount = func.sum(OrderLine.amount).label('sold')
-    product_list = db.session.query(
-        Product.id,
-        Product.sku,
-        Product.name,
-        Product.stock,
-        sold_amount
-    ).outerjoin(OrderLine).group_by(Product.id).order_by(sold_amount.desc()).limit(3)
-    return jsonify([{
-        'id': p.id,
-        'sku': p.sku,
-        'name': p.name,
-        'stock': p.stock,
-        'sold': p.sold,
-    } for p in product_list])
-
-
-@app.route('/api/products/<int:pk>')
-def product(pk):
-    product = Product.query.options(joinedload(Product.product_type)).get(pk)
-    if not product:
-        abort(404)
-    return jsonify({
-        "id": product.id,
-        "sku": product.sku,
-        "name": product.name,
-        "description": product.description,
-        "stock": product.stock,
-        "cost": product.cost,
-        "selling_price": product.selling_price,
-        "type_id": product.product_type_id,
-        "type_name": product.product_type.name
-    })
-
-
-@app.route("/api/products/<int:pk>/customers")
-def product_customers(pk):
-    customers = Customer.query.join(Order).join(OrderLine).join(Product).filter(Product.id == pk).order_by(Customer.id).all()
-    return jsonify([{
-        "id": cust.id,
-        "full_name": cust.full_name,
-        "company_name": cust.company_name,
-        "email": cust.email,
-        "address": cust.address,
-        "postal_code": cust.postal_code,
-        "city": cust.city,
-        "country": cust.country,
-    } for cust in customers])
-
-
-@app.route('/api/types')
-def product_types():
-    types_list = ProductType.query.all()
-    data = []
-    for t in types_list:
-        data.append({
-            'id': t.id,
-            'name': t.name,
-        })
-    return jsonify(data)
-
-
-@app.route('/api/types/<int:pk>')
-def product_type(pk):
-    product_type = ProductType.query.filter_by(id=pk)[0]
-    products = Product.query.filter_by(product_type=product_type)
-    return jsonify({
-        "id": product_type.id,
-        "name": product_type.name,
-        "products": [{
-            "id": product.id,
-            "name": product.name,
-        } for product in products]
-    })
-
-
-@app.route("/api/customers")
-def customers():
-    customers = Customer.query.all()
-    data = []
-    for customer in customers:
-        data.append({
-            "id": customer.id,
-            "full_name": customer.full_name,
-            "company_name": customer.company_name,
-            "email": customer.email,
-            "address": customer.address,
-            "postal_code": customer.postal_code,
-            "city": customer.city,
-            "country": customer.country,
-        })
-    return jsonify(data)
-
-
-@app.route("/api/customers/<int:pk>")
-def customer(pk):
-    try:
-        customer_obj = Customer.query.filter_by(id=pk)[0]
-    except IndexError:
-        app.logger.warning('Customer with ID %s not found', pk, exc_info=True)
-        abort(404)
-    return jsonify({
-        "id": customer_obj.id,
-        "full_name": customer_obj.full_name,
-        "company_name": customer_obj.company_name,
-        "email": customer_obj.email,
-        "address": customer_obj.address,
-        "postal_code": customer_obj.postal_code,
-        "city": customer_obj.city,
-        "country": customer_obj.country,
-    })
-
-@app.route("/api/stats")
-def stats():
-    return jsonify({
-        "products": Product.query.count(),
-        "customers": Customer.query.count(),
-        "orders": Order.query.count(),
-        "numbers":{
-            "revenue": 0,
-            "cost": 0,
-            "profit": 0,
-        }
-    })
 
 
 @app.route('/images/<path:path>')
