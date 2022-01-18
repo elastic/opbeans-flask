@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.10
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN /app/venv/bin/pip install -U pip pip-tools && \
     /app/venv/bin/pip-compile requirements.in && \
     /app/venv/bin/pip install -r requirements.txt
 
-FROM python:3.8-slim
+FROM python:3.10-slim
 
 RUN apt-get -qq update \
  && apt-get -qq install -y \
