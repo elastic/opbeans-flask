@@ -1,4 +1,4 @@
-[![Build Status](https://apm-ci.elastic.co/buildStatus/icon?job=apm-agent-python%2Fopbeans-flask-mbp%2Fmaster)](https://apm-ci.elastic.co/job/apm-agent-python/job/opbeans-flask-mbp/job/master/)
+[![Build Status](https://apm-ci.elastic.co/buildStatus/icon?job=apm-agent-python%2Fopbeans-flask-mbp%2Fmaster)](https://apm-ci.elastic.co/job/apm-agent-python/job/opbeans-flask-mbp/job/main/)
 
 # Opbeans for Ponies
 
