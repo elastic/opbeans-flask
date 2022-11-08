@@ -1,4 +1,4 @@
-[![Build Status](https://apm-ci.elastic.co/buildStatus/icon?job=apm-agent-python%2Fopbeans-flask-mbp%2Fmaster)](https://apm-ci.elastic.co/job/apm-agent-python/job/opbeans-flask-mbp/job/main/)
+[![Build Status](https://github.com/elastic/opbeans-flask/actions/workflows/test.yml/badge.svg)](https://github.com/elastic/opbeans-flask/actions/workflows/test.yml)
 
 # Opbeans for Ponies
 
